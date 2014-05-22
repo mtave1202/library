@@ -63,7 +63,7 @@ class Models {
                 $class_name = self::DEFAULT_NAMESPACE . '\\' . self::DEFAULT_MODEL_DIR . '_' . $variable_name;
                 
                 if(class_exists($class_name)) {
-                    $this->_models[$variable_name] = new $class_name($this->_config);
+                    $this->_models[$variable_name] = new $class_name($this->_config,$this);
                 }
             }
         }
@@ -99,7 +99,7 @@ class Models {
                 $variable_name .= $pathinfo['filename'];
                 $class_name  = self::DEFAULT_MODEL_DIR . '_' . $variable_name;
                 if(class_exists($class_name)) {
-                    $this->_models[$variable_name] = new $class_name($this->_config);
+                    $this->_models[$variable_name] = new $class_name($this->_config,$this);
                 }
             }
         }

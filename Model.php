@@ -21,18 +21,27 @@ class Model {
      * @var \PDO
      */
     protected $_con = null;
+    protected $_db_key = null;
     protected $_table_name = '';
     protected $_primary_key = 'id';
+    protected $_models = null;
     
-    function __construct(Config $config)
+    function __construct(Config $config,Models $models)
     {
+        $this->_models = $models;
         $this->_config = $config;
         if(array_key_exists($this->_table_name,$this->_config->getTableConfig())) {
-            $db_key = $this->_config->getTableConfig()[$this->_table_name];
-            $this->_con = $this->_config->getConnection($db_key);
+            $table_config = $this->_config->getTableConfig();
+            $this->_db_key = $table_config[$this->_table_name];
         } else {
-            $this->_con = $this->_config->getConnection(Config::DEFAULT_DB);
+            $this->_db_key = Config::DEFAULT_DB;
         }
+        $this->_con = $this->_config->getConnection($this->_db_key);
+    }
+    
+    public function getAll()
+    {
+        return $this->primary();
     }
     
     /**
@@ -40,11 +49,14 @@ class Model {
      * @param type $ids
      * @return type
      */
-    public function primary($ids)
+    public function primary($ids = array())
     {
         $query = 'SELECT * FROM ' . $this->_table_name;
-        $query.= ' WHERE ' . $this->_primary_key . ' IN (' . implode(',',$ids) . ')';
+        if(!empty($ids)) {
+            $query.= ' WHERE ' . $this->_primary_key . ' IN (' . implode(',',$ids) . ')';
+        }
         $stmt = $this->_con->prepare($query);
+        $stmt->execute();
         return $stmt->fetchAll();
     }
     
@@ -56,29 +68,31 @@ class Model {
     public function primaryOne($id)
     {
         $ret = $this->primary(array($id));
-        if(empty($ret)) {
+        if(!empty($ret)) {
             return current($ret);
         }
         return null;
     }
     
-    public function insert($keys,$values)
+    /**
+     * Insert文発行
+     * @param array $values
+     * @return type
+     */
+    public function insert($values)
     {
-        $query = 'INSERT INTO ' . $this->_table_name;
-        $query.= " (".implode(',',$keys).") VALUES ";
+        $_keys = array();
+        $_quotes = array();
         $_values = array();
-        $_params = array();
-        foreach($values as $value) {
-            $li = array();
-            for($i=0;$i<count($keys);$i++) {
-                $_params[] = $value[$keys[$i]];
-                $li[] = '?';
-            }
-            $_values[] = '(' . implode(',',$li) . ')';
+        foreach($values as $key => $value) {
+            $_keys[] = '`'.$key.'`';
+            $_quotes[] = '?';
+            $_values[] = $value;
         }
-        $query.= implode(',',$values);
-        $stmt = $this->_con->prepare($query);
-        $stmt->execute($_params);
+        $sql = "INSERT INTO " . $this->_table_name . " (". implode($_keys,",") .") ";
+        $sql.= "VALUES (".implode($_quotes,",").")";
+        $stmt = $this->_con->prepare($sql);
+        return $stmt->execute($_values);
     }
     
     public function updatePrimary($values,$ids = array())
@@ -94,13 +108,13 @@ class Model {
         if(!empty($ids)) {
             $query.= ' WHERE ' . $this->_primary_key . ' IN (' . implode(',',$ids) . ')'; 
         }
-        $stmt = $this->_con->preapre($query);
-        $stmt->execute($values);
+        $stmt = $this->_con->prepare($query);
+        return $stmt->execute($values);
     }
     
     public function updatePrimaryOne($values,$id)
     {
-        $this->updatePrimary($values,array($id));
+        return $this->updatePrimary($values,array($id));
     }
     
     public function deletePrimary($ids)
@@ -108,7 +122,7 @@ class Model {
         $query = 'DELETE FROM ' . $this->_table_name;
         $query.= ' WHERE ' . $this->_primary_key . ' IN (' . implode(',',$ids) . ')';
         $stmt = $this->_con->prepare($query);
-        $stmt->execute();
+        return $stmt->execute();
     }
     
     public function deletePrimaryOne($id)
@@ -116,4 +130,8 @@ class Model {
         return $this->deletePrimary(array($id));
     }
     
+    public function lastInsertId()
+    {
+        return $this->_con->lastInsertId();
+    }
 }
