@@ -12,6 +12,10 @@
  */
 namespace library;
 class Model_Test extends Model {
-    //put your code here
+    protected $_table_name = 'test';
+    protected $_data_types = array(
+        'id'   => \PDO::PARAM_INT,
+        'name' => \PDO::PARAM_STR,
+    );
 }
 

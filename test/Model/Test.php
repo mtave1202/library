@@ -10,7 +10,4 @@
  *
  * @author Administrator
  */
-class Model_Test extends \library\Model_Test {
-    //put your code here
-    protected $_table_name = 'test';
-}
+class Model_Test extends \library\Model_Test {}
