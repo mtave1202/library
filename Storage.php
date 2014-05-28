@@ -161,7 +161,8 @@ class Storage {
         if(array_key_exists($name,$this->_models)) {
             return $this->_models[$name];
         }
-        throw new Exception('アクセス権限なし');
+        var_dump($this->_models);
+        throw new \Exception('アクセス権限なし');
     }
     
     public function getConfig()
