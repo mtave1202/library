@@ -16,7 +16,7 @@ function createHash($password,$cost)
         //salt生成
         $strinit = "abcdefghkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ012345679"; 
         $strarray = preg_split("//", $strinit, 0, PREG_SPLIT_NO_EMPTY); 
-        for ($i = 0, $str = null; $i < 22; $i++) { 
+        for ($i = 0, $str = null; $i < 22; ++$i) { 
             $str .= $strarray[array_rand($strarray, 1)]; 
         }
         $salt = '$2y$'.sprintf('%02d',$cost).'$'.$str;

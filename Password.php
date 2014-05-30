@@ -35,7 +35,7 @@ class Password {
         } else {
             //salt生成
             $strinit = "abcdefghkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ012345679"; 
-            for ($i = 0, $str = null; $i < 22; $i++) { 
+            for ($i = 0, $str = null; $i < 22; ++$i) { 
                 $str .= $strinit[mt_rand(0,strlen($strinit)-1)]; 
             }
             $salt = '$2y$'.sprintf('%02d',self::$_cost).'$'.$str;

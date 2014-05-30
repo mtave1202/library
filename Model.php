@@ -63,7 +63,8 @@ class Model {
             throw \Exception('呼び出しエラー');
         }
         $check = true;
-        for($i=0;$i<count($this->_primary_key);$i++) {
+        $count = count($this->_primary_key);
+        for($i=0;$i<$count;++$i) {
             if(!array_key_exists($this->_primary_key[$i],$arr)) {
                 $check = false;
                 break;
@@ -92,7 +93,8 @@ class Model {
         foreach($ids as $key => $values) {
             if($this->checkKey($values)) {
                 $str = array();
-                for($i=0;$i<count($this->_primary_key);$i++) {
+                $count = count($this->_primary_key);
+                for($i=0;$i<$count;++$i) {
                     $pkey = $this->_primary_key[$i];
                     $bkey = ":P_".$pkey.$key;
                     $str[] = $pkey . " = " . $bkey;
@@ -179,7 +181,8 @@ class Model {
         $binds = array();
         foreach($params as $param) {
             $str = array();
-            for($i=0;$i<count($keys);$i++) {
+            $count = count($keys);
+            for($i=0;$i<$count;++$i) {
                 $column = $keys[$i];
                 $key = ':'.$column . $i;
                 $str[] = $key;
@@ -231,7 +234,8 @@ class Model {
             } else {
                 //単一主キーの場合
                 $wheres = array();
-                for($i=0;$i<count($ids);$i++) {
+                $count = count($ids);
+                for($i=0;$i<$count;++$i) {
                     $key = ':P_'.$this->_primary_key.$i;
                     $wheres[] = $this->_primary_key . " = " .$key;
                     $binds[$key] = array($ids[$i],$this->_data_types[$this->_primary_key]);

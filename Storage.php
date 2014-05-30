@@ -170,6 +170,31 @@ class Storage {
         return $this->_config;
     }
     
+    /**
+     * クエリを発行する
+     * @param string $query
+     * @param array $binds
+     * @param string $db_key = 'default'
+     * @return array 0:boolean 1:PDOStatement|error message
+     */
+    public function query($query,$binds,$db_key = 'default')
+    {
+        if(!array_key_exists($db_key,$this->_connections)) {
+            throw new \InvalidArgumentException;
+        }
+        $con = $this->_connections[$db_key];
+        try {
+            $stmt = $con->prepare($query);
+            foreach($binds as $key => $params) {
+                $stmt->bindValue($key,$params[0],$params[1]);
+            }
+            $stmt->execute();
+        }catch(\Exception $e) {
+            return array(false,$e->getMessage());
+        }
+        return array(true,$stmt);
+    }
+    
     public function isTransaction()
     {
         return $this->_transaction === true;
@@ -177,31 +202,43 @@ class Storage {
     
     public function beginTransaction()
     {    
+        if($this->_transaction) {
+            throw new Exception('transaction is already started');
+        }
         foreach($this->_connections as $con)
         {
             if($con) {
                 $con->beginTransaction();
             }
         }
+        $this->_transaction = true;
     }
     
     public function commit()
     {
+        if(!$this->_transaction) {
+            throw new Exception('transaction is not started');
+        }
         foreach($this->_connections as $con)
         {
             if($con) {
                 $con->commit();
             }
         }
+        $this->_transaction = false;
     }
     
     public function rollback()
     {
+        if(!$this->_transaction) {
+            throw new Exception('transaction is not started');
+        }
         foreach($this->_connections as $con)
         {
             if($con) {
                 $con->rollback();
             }
         }
+        $this->_transaction = false;
     }
 }
