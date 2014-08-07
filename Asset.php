@@ -1,7 +1,7 @@
 <?php
 /**
- * Description of Uri
- *
+ * 様々なpath等を登録し、必要な形にして返す為のクラス。
+ * 言ってしまえばHelper
  * @author Administrator
  */
 namespace library;

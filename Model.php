@@ -2,6 +2,9 @@
 /**
  * データ管理用ModelのBaseとなるクラス。
  * 基本的に1テーブルに対して1クラスを作成する。
+ * 
+ * クエリを発行する際、セキュリティ面を考え値は全てbindする。
+ * 
  * @author Daisuke Abeyama
  */
 namespace library;
@@ -172,7 +175,7 @@ class Model {
      *      ),
      * );
      * @param array $keys insertするカラム
-     * @param array $values 実値
+     * @param array $params 実値
      * @return bool
      */
     public function insert($keys,$params)
@@ -206,7 +209,7 @@ class Model {
      *      $key1 => $value1,
      *      $key2 => $value2,
      * );
-     * @param array $values
+     * @param array $param
      * @return bool
      */
     public function insertOne($param)
@@ -214,6 +217,12 @@ class Model {
         return $this->insert(array_keys($param),array($param));
     }
     
+    /**
+     * 主キーを使った更新
+     * @param array $values 更新カラムと値の配列
+     * @param string|array $ids 主キー
+     * @return type
+     */
     public function updatePrimary($values,$ids = array())
     {
         $query = 'UPDATE ' . $this->_table_name . ' SET ';
