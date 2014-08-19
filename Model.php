@@ -47,6 +47,8 @@ class Model {
      */
     protected $_storage = null;
     
+    protected $_sharding = 1;
+    
     function __construct(Storage $storage)
     {
         $this->_storage = $storage;
@@ -295,5 +297,19 @@ class Model {
     public function lastInsertId()
     {
         return $this->_con->lastInsertId();
+    }
+    
+    /**
+     * テーブル名を取得する
+     * shardingが行われている場合はsharingしたテーブル名を返す
+     * @param type $id
+     */
+    public function getTableName($id = 0)
+    {
+        if($this->_sharding === 1) {
+            return $this->_table_name;
+        }
+        $sId = $id % $this->_sharding;
+        return $this->_table_name . "_" . $sId;
     }
 }

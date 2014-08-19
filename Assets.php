@@ -5,7 +5,7 @@
  * @author Administrator
  */
 namespace library;
-class Asset {
+class Assets {
     /**
      * $_assets = array(
      *     {key} => array(

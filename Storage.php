@@ -55,7 +55,7 @@ class Storage {
         }
         $config = $db_config[$key] + Config::$_default_db_config;
         try {
-            $dsn = 'mysql:host='.$config[Config::DB_CONFIG_HOST].';dbname='.$config[Config::DB_CONFIG_DBNAME].';charset='.$config[Config::DB_CONFIG_CHARSET];
+            $dsn = 'mysql:host='.$config[Config::DB_CONFIG_HOST].';dbname='.$config[Config::DB_CONFIG_DBNAME].';charset='.$config[Config::DB_CONFIG_CHARSET].';unix_socket=/mtmp/mysql.sock';
             $pdo = new \PDO($dsn,$config[Config::DB_CONFIG_USERNAME],$config[Config::DB_CONFIG_PASSWORD],array(\PDO::ATTR_EMULATE_PREPARES => false));
         } catch(PDOException $e) {
             exit('接続失敗:'.$e->getMessage());
@@ -90,7 +90,6 @@ class Storage {
         //実装先毎のModel継承クラス
         $model_dir = $this->_config->getModelDir();
         $this->getModelClasses($class_list, $model_dir);
-        
         foreach($class_list as $variable_name => $class_name){
             if(class_exists($class_name)) {
                 $this->_models[$variable_name] = new $class_name($this);
@@ -99,7 +98,7 @@ class Storage {
     }
     
     /**
-     * 指定されたディレクトリの中のphpファイルを全てincludeし、
+     * 指定されたディレクトリの中のphpファイルを取得
      * class_listにモデル名をキーとしたクラス一覧を返す
      * @param type $class_list
      * @param type $dir
@@ -112,7 +111,7 @@ class Storage {
             $path_name = $path->getPathName();
             if(preg_match("/^[a-zA-Z]{1}\w*\.php$/",$file_name)) {
                 //存在したphpファイルをincludeする。
-                include_once($path_name);
+                //include_once($path_name);
                 $pathinfo = pathinfo($path_name);
                 $dir_name = str_replace(DIRECTORY_SEPARATOR,'_',str_replace($dir,'',$pathinfo['dirname']));
                 if(!empty($dir_name) && $dir_name[0] === '_') {
@@ -120,8 +119,8 @@ class Storage {
                 }
                 $variable_name  = empty($dir_name) ? '' : $dir_name . '_';
                 $variable_name .= $pathinfo['filename'];
-                $namespace = $namespace ? $namespace . '\\' : '';
-                $class_name = $namespace . 'Model_' . $variable_name;
+                $n = $namespace ? $namespace . '\\' : '';
+                $class_name = $n . 'Model_' . $variable_name;
                 $class_list[$variable_name] = $class_name;
             }
         }
@@ -161,7 +160,6 @@ class Storage {
         if(array_key_exists($name,$this->_models)) {
             return $this->_models[$name];
         }
-        var_dump($this->_models);
         throw new \Exception('アクセス権限なし');
     }
     
@@ -231,7 +229,7 @@ class Storage {
     public function rollback()
     {
         if(!$this->_transaction) {
-            throw new Exception('transaction is not started');
+            throw new \Exception('transaction is not started');
         }
         foreach($this->_connections as $con)
         {

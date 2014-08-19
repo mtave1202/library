@@ -28,11 +28,13 @@ class Config {
     protected $_table_config = array();
     protected $_connections = array();
     protected $_model_dir = "";
+    protected $_push_config = array();
     
     function __construct($config) {
         $this->_db_config    = isset($config['db_config']) ? $config['db_config'] : null;
         $this->_table_config = isset($config['table_config']) ? $config['table_config'] : array();
         $this->_model_dir    = isset($config['model_dir']) ? $config['model_dir'] : "";
+        $this->_push_config  = isset($config['push_config']) ? $config['push_config'] : array();
     }
     
     public function getDbConfig()
@@ -60,5 +62,14 @@ class Config {
     public function setModelDir($model_dir)
     {
         $this->_model_dir = $model_dir;
+    }
+    
+    public function getPushConfig()
+    {
+        return $this->_push_config;
+    }
+    public function setPushConfig($push_config)
+    {
+        return $this->_push_config = $push_config;
     }
 }
