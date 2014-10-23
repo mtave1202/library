@@ -52,7 +52,7 @@ class Push implements \ApnsPHP_Log_Interface
     protected $_config;
 
     /**
-     * @var ApnsPHP_Push
+     * @var \ApnsPHP_Push
      */
     protected $_iosPush;
 
@@ -174,7 +174,7 @@ class Push implements \ApnsPHP_Log_Interface
     protected function _ios($deviceToken, Push_Message $m)
     {
         $push = $this->_getIosPush(isset($this->_config['ios']) && !empty($this->_config['ios']['reload_before_send']));
-        $message = new ApnsPHP_Message($deviceToken);
+        $message = new \ApnsPHP_Message($deviceToken);
         $badge = $m->badge();
         if ($badge !== null) {
             $message->setBadge($badge);
@@ -205,7 +205,7 @@ class Push implements \ApnsPHP_Log_Interface
     }
 
     /**
-     * @return ApnsPHP_Push
+     * @return \ApnsPHP_Push
      */
     protected function _getIosPush($reload = false)
     {
@@ -214,14 +214,14 @@ class Push implements \ApnsPHP_Log_Interface
         }
 
         $config = $this->_config['ios'];
-        $push = new ApnsPHP_Push(
+        $push = new \ApnsPHP_Push(
             $config['environment'] === 'sandbox'
-                ? ApnsPHP_Abstract::ENVIRONMENT_SANDBOX
-                : ApnsPHP_Abstract::ENVIRONMENT_PRODUCTION,
-            $config['provider_certification_authority']
+                ? \ApnsPHP_Abstract::ENVIRONMENT_SANDBOX
+                : \ApnsPHP_Abstract::ENVIRONMENT_PRODUCTION
+            ,$config['provider_certification_authority']
         );
         $push->setLogger($this);
-        $push->setRootCertificationAuthority($config['root_certification_authority']);
+        //$push->setRootCertificationAuthority($config['root_certification_authority']);
         $push->setSendRetryTimes($config['send_retry_times']);
         $push->connect();
         return $this->_iosPush = $push;

@@ -22,6 +22,7 @@ class Storage {
      * @var array
      */
     protected $_models = array();
+    protected $_modelPaths = array();
     protected $_connections = array();
     protected $_transaction = false;
     
@@ -37,7 +38,8 @@ class Storage {
         $db_config = $this->_config->getDbConfig();
         foreach($db_config as $key => $config)
         {
-            $this->createConnection($key);
+            $this->_connections[$key] = null;
+            //$this->createConnection($key);
         }
     }
     
@@ -55,7 +57,7 @@ class Storage {
         }
         $config = $db_config[$key] + Config::$_default_db_config;
         try {
-            $dsn = 'mysql:host='.$config[Config::DB_CONFIG_HOST].';dbname='.$config[Config::DB_CONFIG_DBNAME].';charset='.$config[Config::DB_CONFIG_CHARSET].';unix_socket=/mtmp/mysql.sock';
+            $dsn = $config[Config::DB_DSN];
             $pdo = new \PDO($dsn,$config[Config::DB_CONFIG_USERNAME],$config[Config::DB_CONFIG_PASSWORD],array(\PDO::ATTR_EMULATE_PREPARES => false));
         } catch(PDOException $e) {
             exit('接続失敗:'.$e->getMessage());
@@ -68,9 +70,20 @@ class Storage {
     {
         return $this->_connections;
     }
+    /**
+     * PDO情報を返す
+     * @param string $key 取得する接続情報のキー
+     * @return \PDO
+     */
     public function getConnection($key)
     {
         if(array_key_exists($key,$this->_connections)) {
+            if(!$this->_connections[$key]) {
+                $this->createConnection($key);
+                if($this->_transaction && !$this->_connections[$key]->inTransaction()) {
+                    $this->_connections[$key]->beginTransaction();
+                }
+            }
             return $this->_connections[$key];
         }
         return null;
@@ -88,11 +101,16 @@ class Storage {
         $this->getModelClasses($class_list, $default_dir, self::DEFAULT_NAMESPACE);
         
         //実装先毎のModel継承クラス
-        $model_dir = $this->_config->getModelDir();
-        $this->getModelClasses($class_list, $model_dir);
+        $model_dirs = $this->_config->getModelDirs();
+        foreach($model_dirs as $namespace => $model_dir) {
+            $this->getModelClasses($class_list, $model_dir, $namespace);
+        }
         foreach($class_list as $variable_name => $class_name){
             if(class_exists($class_name)) {
-                $this->_models[$variable_name] = new $class_name($this);
+                $this->_modelPaths[$variable_name] = $class_name;
+                //$this->_models[$variable_name] = new $class_name($this);
+            } else {
+                error_log('notfound:'.$class_name);
             }
         }
     }
@@ -113,10 +131,12 @@ class Storage {
                 //存在したphpファイルをincludeする。
                 //include_once($path_name);
                 $pathinfo = pathinfo($path_name);
+                
                 $dir_name = str_replace(DIRECTORY_SEPARATOR,'_',str_replace($dir,'',$pathinfo['dirname']));
                 if(!empty($dir_name) && $dir_name[0] === '_') {
                     $dir_name = substr($dir_name,1,strlen($dir_name)-1);
                 }
+                
                 $variable_name  = empty($dir_name) ? '' : $dir_name . '_';
                 $variable_name .= $pathinfo['filename'];
                 $n = $namespace ? $namespace . '\\' : '';
@@ -157,7 +177,10 @@ class Storage {
      */
     function __get($name)
     {
-        if(array_key_exists($name,$this->_models)) {
+        if(array_key_exists($name,$this->_modelPaths)) {
+            if(!isset($this->_models[$name])) {
+                $this->_models[$name] = new $this->_modelPaths[$name]($this);
+            }
             return $this->_models[$name];
         }
         throw new \Exception('アクセス権限なし');
@@ -201,9 +224,9 @@ class Storage {
     public function beginTransaction()
     {    
         if($this->_transaction) {
-            throw new Exception('transaction is already started');
+            throw new \Exception('transaction is already started');
         }
-        foreach($this->_connections as $con)
+        foreach($this->_connections as $key => $con)
         {
             if($con) {
                 $con->beginTransaction();
@@ -217,7 +240,7 @@ class Storage {
         if(!$this->_transaction) {
             throw new Exception('transaction is not started');
         }
-        foreach($this->_connections as $con)
+        foreach($this->_connections as $key => $con)
         {
             if($con) {
                 $con->commit();
